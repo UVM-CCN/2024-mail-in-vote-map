@@ -5,6 +5,9 @@
  const width = 660;
  const height = 700;
 
+ // set the #loader div to show the loading screen
+    d3.select("#loader").style("display", "block");
+
  // Create SVG
  const svg = d3.select("#map")
      .append("svg")
@@ -66,7 +69,7 @@ svg.append("text")
 svg.append("text")
     .attr("x", (width/3)+180)
     .attr("y", 60)
-    .text("100%")
+    .text("3%")
     .attr("fill", "black");
 
 // create an object to store total vote data by Ballot Status
@@ -78,9 +81,12 @@ const allVotesByStatus = {
 
  // Load both the GeoJSON and CSV data
  Promise.all([
-     d3.json("public/data/FS_VCGI_OPENDATA_Boundary_BNDHASH_poly_towns_SP_v1_-4796836414587772833.geojson"),
-     d3.csv("public/data/DetailedAbsenteeVotersList_9.30.2024.csv") // Replace with the path to your CSV file
+     d3.json("https://raw.githubusercontent.com/UVM-CCN/2024-mail-in-vote-map/refs/heads/main/public/data/FS_VCGI_OPENDATA_Boundary_BNDHASH_poly_towns_SP_v1_-4796836414587772833.geojson"),
+     d3.csv("https://raw.githubusercontent.com/UVM-CCN/2024-mail-in-vote-map/refs/heads/main/public/data/DetailedAbsenteeVotersList_9.30.2024.csv") // Replace with the path to your CSV file
  ]).then(function([vermont, voteData]) {
+    // hide the loading screen
+    d3.select("#loader").style("display", "none");
+    
      // Process vote data
      const votesByTown = processVoteData(voteData);
      console.log(votesByTown); 
@@ -141,7 +147,7 @@ const allVotesByStatus = {
 
      console.log(d.properties)
      tooltip.style("opacity", 1)
-         .html(`<b>${d.properties.votes.RECEIVED} votes</b> received from <b>${d.properties.TOWNNAME}</b><br><br>${percentage}% of all ballots`)
+         .html(`<b>${d.properties.votes.RECEIVED} votes</b> received from <b>${d.properties.TOWNNAME}</b><br><br>${percentage}% of all ballots sent to this town`)
          .style("left", (event.pageX + 10) + "px")
          .style("top", (event.pageY - 28) + "px");
  }
