@@ -59,25 +59,15 @@ svg.append("rect")
     .style("fill", "url(#linear-gradient)")
     .attr("stroke", "black");
 
-// add numbers to the gradient
-svg.append("text")
-    .attr("x", (width/3)-100)
-    .attr("y", 60)
-    .text("0")
-    .attr("fill", "black");
-
-svg.append("text")
-    .attr("x", (width/3)+180)
-    .attr("y", 60)
-    .text("3%")
-    .attr("fill", "black");
-
 // create an object to store total vote data by Ballot Status
 const allVotesByStatus = {
     RECEIVED: 0,
     REQUESTED: 0,
-    ISSUED: 0
+    ISSUED: 0,
+    PERCENTAGE: 0
 };
+
+let maxPercentage = 0;
 
  // Load both the GeoJSON and CSV data
  Promise.all([
@@ -89,16 +79,22 @@ const allVotesByStatus = {
     
      // Process vote data
      const votesByTown = processVoteData(voteData);
-     console.log(votesByTown); 
+     
+
      // Set color scale domain based on total votes
      const totalVotes = Object.values(votesByTown).map(d => d.RECEIVED);
-     color.domain([0, d3.max(totalVotes)]);
+
+     // set it 0 to 1 for percentage
+     color.domain([0, maxPercentage]);
 
      // Add vote counts to GeoJSON properties
      vermont.features.forEach(town => {
-      console.log(town.properties.TOWNNAME)
+      if (town.properties.TOWNNAME == "AVERILL") {
+            console.log(town);
+        }
       const townName = town.properties.TOWNNAME.toUpperCase();
-      town.properties.votes = votesByTown[townName] || { RECEIVED: 0, REQUESTED: 0, ISSUED: 0 };
+
+      town.properties.votes = votesByTown[townName] || { RECEIVED: 0, REQUESTED: 0, ISSUED: 0};
   });
 
      // Draw counties
@@ -107,7 +103,17 @@ const allVotesByStatus = {
          .enter().append("path")
          .attr("d", path)
          .attr("class", "county")
-         .attr("fill", d => color(d.properties.votes.RECEIVED))
+         .attr("fill", d => {
+            // check to see if the county is already in the object
+            if (voteData.find(vote => vote["Town Name"] == d.properties.TOWNNAME)) {
+                console.log('no')
+                return color(d.properties.votes.PERCENTAGE);
+            } else {
+                return color(0);
+            } 
+
+             return color(percentage);
+         })
          .on("mouseover", function(event, d) {
              d3.select(this).attr("stroke", "#333").attr("stroke-width", 4);
              showTooltip(event, d);
@@ -118,7 +124,21 @@ const allVotesByStatus = {
          });
          console.log(allVotesByStatus);
 
-     // We don't need to draw a separate state outline now, as county borders will create the state shape
+     
+         // add numbers to the gradient
+        svg.append("text")
+            .attr("x", (width/3)-100)
+            .attr("y", 60)
+            .text("0")
+            .attr("fill", "black");
+
+        svg.append("text")
+            .attr("x", (width/3)+180)
+            .attr("y", 60)
+            .text(Math.round(maxPercentage)+"%")
+            .attr("fill", "black");
+
+            
  });
 
  function processVoteData(voteData) {
@@ -127,13 +147,57 @@ const allVotesByStatus = {
         // add vote to total votes
         allVotesByStatus[vote["Ballot Status"]]++;
 
-        const county = vote["Town Name"]; // Assuming 'county' is the column name in your CSV
+        let county = vote["Town Name"]; // Assuming 'county' is the column name in your CSV
         const status = vote["Ballot Status"];
+
+        if (vote["Town Name"] == "ESSEX TOWN") {
+            county = "ESSEX";
+        } else if (vote["Town Name"] == "ESSEX JUNCTION CITY") {
+            county = "ESSEX JUNCTION";
+        }
+
+        // check to see if the county is already in the object
+        if (county == "LEWIS") {
+            console.log('averill', vote)
+        }
+      
         if (!votesByCounty[county]) {
             votesByCounty[county] = { RECEIVED: 0, REQUESTED: 0, ISSUED: 0 };
-        }
+        } 
         votesByCounty[county][status]++;
     });
+
+    // calculate the percentage of votes received compared to votes issued
+    for (const county in votesByCounty) {
+        const received = votesByCounty[county].RECEIVED;
+        const issued = votesByCounty[county].ISSUED;
+        if (received == 0 || issued == 0) {
+            votesByCounty[county].PERCENTAGE = 0;
+            // console.log(received, issued, (received/issued), county)
+        }
+        votesByCounty[county].PERCENTAGE = (received / issued) * 100;
+    }
+
+    // fir all the counties, find the max percentage
+    for (const county in votesByCounty) {
+        if (votesByCounty[county].PERCENTAGE > maxPercentage) {
+            maxPercentage = votesByCounty[county].PERCENTAGE;
+        }
+    }
+
+    console.log('max percentage', maxPercentage);
+    
+    allVotesByStatus.PERCENTAGE = (allVotesByStatus.RECEIVED / allVotesByStatus.ISSUED) * 100;
+    console.log(allVotesByStatus);
+
+    // round allVotesByStatus.PERCENTAGE to two decimal places
+    allVotesByStatus.PERCENTAGE = allVotesByStatus.PERCENTAGE.toFixed(2);
+
+    const dateStamp = "Oct 7, 2024"; // Replace with the date of your data
+
+    // edit the text of the h3 tag with #subtitle
+    d3.select("#subtitle").text(`In total, ${allVotesByStatus.PERCENTAGE}% of Vermonters have returned their ballots as of ${dateStamp}`);
+
     return votesByCounty;
  }
 
@@ -145,9 +209,16 @@ const allVotesByStatus = {
     const issued = d.properties.votes.ISSUED;
     const percentage = Math.round((received / issued) * 100);
 
+    let textString;
+    if (!percentage) {
+        textString = `<b>${d.properties.TOWNNAME}</b> <br><br> No data available`
+    } else {
+        textString = `<b>${d.properties.votes.RECEIVED} votes</b> received from <b>${d.properties.TOWNNAME}</b><br><br>${percentage}% of all ballots sent to this town out of ${d.properties.votes.ISSUED}`
+    }
+
      console.log(d.properties)
      tooltip.style("opacity", 1)
-         .html(`<b>${d.properties.votes.RECEIVED} votes</b> received from <b>${d.properties.TOWNNAME}</b><br><br>${percentage}% of all ballots sent to this town`)
+         .html(textString)
          .style("left", (event.pageX + 10) + "px")
          .style("top", (event.pageY - 28) + "px");
  }
