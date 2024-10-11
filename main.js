@@ -9,16 +9,49 @@
     d3.select("#loader").style("display", "block");
 
  // Create SVG
- const svg = d3.select("#map")
-     .append("svg")
-     .attr("width", width)
-     .attr("height", height);
+const svg = d3.select("#map")
+.append("svg")
+.attr("width", "100%")
+.attr("height", "100%")
+.attr("preserveAspectRatio", "xMinYMin meet")
+.attr("viewBox", `0 0 660 700`);
+
+function resizeMap() {
+    // get the container dimensions of the parent node of #map
+    const container = d3.select("#map").node().getBoundingClientRect();
+
+    const width = container.width;
+    const height = container.height;
+    console.log(container)
+
+    svg.attr("width", width)
+       .attr("height", height);
+
+    // Update projection
+    projection.scale(Math.min(width, height) * 14.3)
+              .translate([width / 3, height / 2.2]);
+
+    // Update path generator
+    path = d3.geoPath().projection(projection);
+
+    // Update all paths
+    svg.selectAll("path")
+       .attr("d", path);
+
+    // Update gradient rectangle
+    svg.select("rect")
+       .attr("width", width * 0.45)
+       .attr("transform", `translate(${(width/3)-width*0.225}, 20)`);
+
+    // Update gradient text positions
+    svg.selectAll("text")
+       .attr("x", (d, i) => i === 0 ? (width/3)-width*0.225 : (width/3)+width*0.225);
+}
 
  // Define projection and path generator
  const projection = d3.geoMercator()
     .center([-72.7, 44])
     .scale(10000)
-    .translate([width / 3, height / 2]);
 
  const path = d3.geoPath().projection(projection);
 
@@ -92,7 +125,9 @@ let maxPercentage = 0;
       if (town.properties.TOWNNAME == "AVERILL") {
             console.log(town);
         }
-      const townName = town.properties.TOWNNAME.toUpperCase();
+
+        
+      let townName = town.properties.TOWNNAME.toUpperCase();
 
       town.properties.votes = votesByTown[townName] || { RECEIVED: 0, REQUESTED: 0, ISSUED: 0};
   });
@@ -106,13 +141,19 @@ let maxPercentage = 0;
          .attr("fill", d => {
             // check to see if the county is already in the object
             if (voteData.find(vote => vote["Town Name"] == d.properties.TOWNNAME)) {
-                console.log('no')
+                
                 return color(d.properties.votes.PERCENTAGE);
             } else {
+                if (d.properties.TOWNNAME == "ESSEX") {
+                    return color(d.properties.votes.PERCENTAGE);
+                } else if (d.properties.TOWNNAME == "ESSEX JUNCTION") {
+                    return color(d.properties.votes.PERCENTAGE);
+                }
+
                 return color(0);
             } 
 
-             return color(percentage);
+            //  return color(percentage);
          })
          .on("mouseover", function(event, d) {
              d3.select(this).attr("stroke", "#333").attr("stroke-width", 4);
@@ -122,14 +163,14 @@ let maxPercentage = 0;
              d3.select(this).attr("stroke", "#fff").attr("stroke-width", 0.5);
              hideTooltip();
          });
-         console.log(allVotesByStatus);
+        //  console.log(allVotesByStatus);
 
      
          // add numbers to the gradient
         svg.append("text")
-            .attr("x", (width/3)-100)
+            .attr("x", (width/3)-105)
             .attr("y", 60)
-            .text("0")
+            .text("0%")
             .attr("fill", "black");
 
         svg.append("text")
@@ -188,7 +229,7 @@ let maxPercentage = 0;
     console.log('max percentage', maxPercentage);
     
     allVotesByStatus.PERCENTAGE = (allVotesByStatus.RECEIVED / allVotesByStatus.ISSUED) * 100;
-    console.log(allVotesByStatus);
+    
 
     // round allVotesByStatus.PERCENTAGE to two decimal places
     allVotesByStatus.PERCENTAGE = allVotesByStatus.PERCENTAGE.toFixed(2);
@@ -211,12 +252,19 @@ let maxPercentage = 0;
 
     let textString;
     if (!percentage) {
-        textString = `<b>${d.properties.TOWNNAME}</b> <br><br> No data available`
+        console.log(d.properties)
+        if (d.properties.votes.ISSUED > 0) {
+            // this is a town that has been issued ballots, but no one has returned them
+            textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> has voted</span><br><br>${d.properties.votes.RECEIVED} ballots received out of ${d.properties.votes.ISSUED} sent out`
+        } else {
+            // this is a town that is showing all zeros for issued and received, some data discrepancy
+            textString = `<b>${d.properties.TOWNNAME}</b> <br><br> No data available`
+        }
     } else {
-        textString = `<b>${d.properties.votes.RECEIVED} votes</b> received from <b>${d.properties.TOWNNAME}</b><br><br>${percentage}% of all ballots sent to this town out of ${d.properties.votes.ISSUED}`
+        textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> has voted</span><br><br>${d.properties.votes.RECEIVED} ballots received out of ${d.properties.votes.ISSUED} sent out`
     }
 
-     console.log(d.properties)
+    //  console.log(d.properties)
      tooltip.style("opacity", 1)
          .html(textString)
          .style("left", (event.pageX + 10) + "px")
@@ -226,3 +274,9 @@ let maxPercentage = 0;
  function hideTooltip() {
      d3.select("#tooltip").style("opacity", 0);
  }
+
+ // Initial call
+resizeMap();
+
+// Add event listener for window resize
+window.addEventListener("resize", resizeMap);
