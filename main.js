@@ -216,7 +216,7 @@ let maxPercentage = 0;
             votesByCounty[county].PERCENTAGE = 0;
             // console.log(received, issued, (received/issued), county)
         }
-        votesByCounty[county].PERCENTAGE = (received / issued) * 100;
+        votesByCounty[county].PERCENTAGE = (received / (issued+received)) * 100;
     }
 
     // fir all the counties, find the max percentage
@@ -228,7 +228,7 @@ let maxPercentage = 0;
 
     console.log('max percentage', maxPercentage);
     
-    allVotesByStatus.PERCENTAGE = (allVotesByStatus.RECEIVED / allVotesByStatus.ISSUED) * 100;
+    allVotesByStatus.PERCENTAGE = (allVotesByStatus.RECEIVED / (allVotesByStatus.ISSUED+allVotesByStatus.RECEIVED)) * 100;
     
 
     // round allVotesByStatus.PERCENTAGE to two decimal places
@@ -237,7 +237,7 @@ let maxPercentage = 0;
     const dateStamp = "Oct 10, 2024"; // Replace with the date of your data
 
     // edit the text of the h3 tag with #subtitle
-    d3.select("#subtitle").text(`In total, ${allVotesByStatus.PERCENTAGE}% of Vermonters have returned their ballots as of ${dateStamp}`);
+    d3.select("#subtitle").text(`In total, ${allVotesByStatus.PERCENTAGE}% of mail-in ballots have been returned and tallied as of ${dateStamp}`);
 
     return votesByCounty;
  }
@@ -248,20 +248,20 @@ let maxPercentage = 0;
     // calculate the percentage of votes received compared to votes issued
     const received = d.properties.votes.RECEIVED;
     const issued = d.properties.votes.ISSUED;
-    const percentage = Math.round((received / issued) * 100);
+    const percentage = Math.round((received / (issued+received)) * 100);
 
     let textString;
     if (!percentage) {
         console.log(d.properties)
         if (d.properties.votes.ISSUED > 0) {
             // this is a town that has been issued ballots, but no one has returned them
-            textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> has voted</span><br><br>${d.properties.votes.RECEIVED} ballots received out of ${d.properties.votes.ISSUED} sent out`
+            textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> mail-in ballots tallied</span><br><br>${d.properties.votes.RECEIVED} ballots received out of ${d.properties.votes.ISSUED+d.properties.votes.RECEIVED} sent out`
         } else {
             // this is a town that is showing all zeros for issued and received, some data discrepancy
             textString = `<b>${d.properties.TOWNNAME}</b> <br><br> No data available`
         }
     } else {
-        textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> has voted</span><br><br>${d.properties.votes.RECEIVED} ballots received out of ${d.properties.votes.ISSUED} sent out`
+        textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> mail-in ballots tallied</span><br><br>${d.properties.votes.RECEIVED} ballots received out of ${d.properties.votes.ISSUED+d.properties.votes.RECEIVED} sent out`
     }
 
     //  console.log(d.properties)
