@@ -43,3 +43,15 @@ body {
   position: relative;
   width: 700px;
 }
+
+a {
+  color: #164734;
+}
+
+a:hover {
+  color: #333;
+}
+
+a:visited {
+  color: #164734
+}

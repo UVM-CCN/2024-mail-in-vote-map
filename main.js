@@ -29,7 +29,7 @@ function resizeMap() {
 
     // Update projection
     projection.scale(Math.min(width, height) * 14.3)
-              .translate([width / 3, height / 2.2]);
+              .translate([width / 3.5, height / 2.2]);
 
     // Update path generator
     path = d3.geoPath().projection(projection);
@@ -40,12 +40,12 @@ function resizeMap() {
 
     // Update gradient rectangle
     svg.select("rect")
-       .attr("width", width * 0.45)
-       .attr("transform", `translate(${(width/3)-width*0.225}, 20)`);
+       .attr("width", width * 0.55)
+       .attr("transform", `translate(${(width/4)-width*0.225}, 20)`);
 
     // Update gradient text positions
     svg.selectAll("text")
-       .attr("x", (d, i) => i === 0 ? (width/3)-width*0.225 : (width/3)+width*0.225);
+       .attr("x", (d, i) => i === 0 ? (width/4)-width*0.225 : (width/4)+width*0.225);
 }
 
  // Define projection and path generator
@@ -65,7 +65,7 @@ var defs = svg.append("defs");
 //Append a linearGradient element to the defs and give it a unique id
 var linearGradient = defs.append("linearGradient")
     .attr("id", "linear-gradient")
-    .attr("transform", "translate(100, 20)");
+    .attr("transform", "translate(50, 20)");
 
 //Horizontal gradient
 linearGradient
@@ -88,7 +88,7 @@ linearGradient.append("stop")
 svg.append("rect")
     .attr("width", 300)
     .attr("height", 20)
-    .attr("transform", `translate(${(width/3)-100}, 20)`)
+    .attr("transform", `translate(${(width/3.5)-100}, 20)`)
     .style("fill", "url(#linear-gradient)")
     .attr("stroke", "black");
 
@@ -102,17 +102,18 @@ const allVotesByStatus = {
 
 let maxPercentage = 0;
 
+let allPossibleBallotStatuses = [];
+
  // Load both the GeoJSON and CSV data
  Promise.all([
      d3.json("https://raw.githubusercontent.com/UVM-CCN/2024-mail-in-vote-map/refs/heads/main/external-data/FS_VCGI_OPENDATA_Boundary_BNDHASH_poly_towns_SP_v1_-4796836414587772833.geojson"),
-     d3.csv("https://raw.githubusercontent.com/UVM-CCN/2024-mail-in-vote-map/refs/heads/main/external-data/filtered-20241010.csv") // Replace with the path to your CSV file
+     d3.csv("https://raw.githubusercontent.com/UVM-CCN/2024-mail-in-vote-map/refs/heads/main/external-data/filtered-20241014.csv") // Replace with the path to your CSV file
  ]).then(function([vermont, voteData]) {
     // hide the loading screen
     d3.select("#loader").style("display", "none");
     
      // Process vote data
      const votesByTown = processVoteData(voteData);
-     
 
      // Set color scale domain based on total votes
      const totalVotes = Object.values(votesByTown).map(d => d.RECEIVED);
@@ -168,13 +169,13 @@ let maxPercentage = 0;
      
          // add numbers to the gradient
         svg.append("text")
-            .attr("x", (width/3)-105)
+            .attr("x", (width/3.5)-105)
             .attr("y", 60)
             .text("0%")
             .attr("fill", "black");
 
         svg.append("text")
-            .attr("x", (width/3)+180)
+            .attr("x", (width/3.5)+180)
             .attr("y", 60)
             .text(Math.round(maxPercentage)+"%")
             .attr("fill", "black");
@@ -184,7 +185,12 @@ let maxPercentage = 0;
 
  function processVoteData(voteData) {
     const votesByCounty = {};
+
+    // get every unique string in the Ballot Status column
+    allPossibleBallotStatuses = [...new Set(voteData.map(vote => vote["Ballot Status"]))];
+    console.log(voteData)
     voteData.forEach(vote => {
+        
         // add vote to total votes
         allVotesByStatus[vote["Ballot Status"]]++;
 
@@ -196,22 +202,54 @@ let maxPercentage = 0;
         } else if (vote["Town Name"] == "ESSEX JUNCTION CITY") {
             county = "ESSEX JUNCTION";
         }
-
-        // check to see if the county is already in the object
-        if (county == "LEWIS") {
-            console.log('averill', vote)
-        }
       
+        // if the county doesn't exist in the object, add it with zeros and all possible statuses
         if (!votesByCounty[county]) {
-            votesByCounty[county] = { RECEIVED: 0, REQUESTED: 0, ISSUED: 0 };
+            votesByCounty[county] = { RECEIVED: 0, REQUESTED: 0, ISSUED: 0, DEFECTIVE: 0, UNDELIVERABLE: 0, "UNKNOWN-NEVER RETURNED": 0, "RECEIVED / CURED BALLOT": 0, "RECEIVED AFTER ELECTION": 0, PERCENTAGE: 0};
         } 
         votesByCounty[county][status]++;
     });
+    
 
     // calculate the percentage of votes received compared to votes issued
     for (const county in votesByCounty) {
-        const received = votesByCounty[county].RECEIVED;
-        const issued = votesByCounty[county].ISSUED;
+        if (county == "SOUTH HERO") {
+            console.log(votesByCounty[county])
+        }
+        // add some conditionals to set NaN values to 0
+
+        if (!votesByCounty[county].DEFECTIVE) {
+            votesByCounty[county].DEFECTIVE = 0;
+        }
+
+        if (votesByCounty[county].UNDELIVERABLE == undefined) {
+            votesByCounty[county].UNDELIVERABLE = 0;
+        }
+
+        if (!votesByCounty[county]["UNKNOWN-NEVER RETURNED"]) {
+            votesByCounty[county]["UNKNOWN-NEVER RETURNED"] = 0;
+        }
+
+        if (!votesByCounty[county]["RECEIVED / CURED BALLOT"]) {
+            votesByCounty[county]["RECEIVED / CURED BALLOT"] = 0;
+        }
+
+        if (!votesByCounty[county]["RECEIVED AFTER ELECTION"]) {
+            votesByCounty[county]["RECEIVED AFTER ELECTION"] = 0;
+        }
+
+
+        // all received types
+        const received = votesByCounty[county].RECEIVED+
+        votesByCounty[county]["RECEIVED / CURED BALLOT"]+
+        votesByCounty[county]["RECEIVED AFTER ELECTION"];
+        
+        // all issued types
+        const issued = votesByCounty[county].ISSUED+
+        votesByCounty[county]["UNDELIVERABLE"]+
+        votesByCounty[county]["UNKNOWN-NEVER RETURNED"]+
+        votesByCounty[county]["DEFECTIVE"];
+
         if (received == 0 || issued == 0) {
             votesByCounty[county].PERCENTAGE = 0;
             // console.log(received, issued, (received/issued), county)
@@ -234,7 +272,7 @@ let maxPercentage = 0;
     // round allVotesByStatus.PERCENTAGE to two decimal places
     allVotesByStatus.PERCENTAGE = allVotesByStatus.PERCENTAGE.toFixed(2);
 
-    const dateStamp = "Oct 10, 2024"; // Replace with the date of your data
+    const dateStamp = "Oct 14, 2024"; // Replace with the date of your data
 
     // edit the text of the h3 tag with #subtitle
     d3.select("#subtitle").text(`In total, ${allVotesByStatus.PERCENTAGE}% of mail-in ballots have been returned and tallied as of ${dateStamp}`);
@@ -246,22 +284,32 @@ let maxPercentage = 0;
      const tooltip = d3.select("#tooltip");
 
     // calculate the percentage of votes received compared to votes issued
-    const received = d.properties.votes.RECEIVED;
-    const issued = d.properties.votes.ISSUED;
-    const percentage = Math.round((received / (issued+received)) * 100);
+    // all received types
+    const received = d.properties.votes.RECEIVED+
+    d.properties.votes["RECEIVED / CURED BALLOT"]+
+    d.properties.votes["RECEIVED AFTER ELECTION"];
+    
+    // all issued types
+    const issued = d.properties.votes.ISSUED+
+    d.properties.votes["UNDELIVERABLE"]+
+    d.properties.votes["UNKNOWN-NEVER RETURNED"]+
+    d.properties.votes["DEFECTIVE"];
 
+    const percentage = Math.round((received / (issued+received)) * 100);
+    console.log(d.properties)
     let textString;
     if (!percentage) {
         console.log(d.properties)
         if (d.properties.votes.ISSUED > 0) {
             // this is a town that has been issued ballots, but no one has returned them
-            textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> mail-in ballots tallied</span><br><br>${d.properties.votes.RECEIVED} ballots received out of ${d.properties.votes.ISSUED+d.properties.votes.RECEIVED} sent out`
+            textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> mail-in ballots tallied</span><br><br>${received} ballots received out of ${issued+received} sent out`
         } else {
             // this is a town that is showing all zeros for issued and received, some data discrepancy
             textString = `<b>${d.properties.TOWNNAME}</b> <br><br> No data available`
         }
     } else {
-        textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> mail-in ballots tallied</span><br><br>${d.properties.votes.RECEIVED} ballots received out of ${d.properties.votes.ISSUED+d.properties.votes.RECEIVED} sent out`
+        // normal situation
+        textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> mail-in ballots tallied</span><br><br>${received} ballots received out of ${issued+received} sent out`
     }
 
     //  console.log(d.properties)
