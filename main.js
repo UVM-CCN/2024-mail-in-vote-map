@@ -97,7 +97,12 @@ const allVotesByStatus = {
     RECEIVED: 0,
     REQUESTED: 0,
     ISSUED: 0,
-    PERCENTAGE: 0
+    PERCENTAGE: 0,
+    DEFECTIVE: 0,
+    UNDELIVERABLE: 0,
+    "UNKNOWN-NEVER RETURNED": 0,
+    "RECEIVED / CURED BALLOT": 0,
+    "RECEIVED AFTER ELECTION": 0
 };
 
 let maxPercentage = 0;
@@ -188,11 +193,8 @@ let allPossibleBallotStatuses = [];
 
     // get every unique string in the Ballot Status column
     allPossibleBallotStatuses = [...new Set(voteData.map(vote => vote["Ballot Status"]))];
-    console.log(voteData)
+    console.log(allPossibleBallotStatuses)
     voteData.forEach(vote => {
-        
-        // add vote to total votes
-        allVotesByStatus[vote["Ballot Status"]]++;
 
         let county = vote["Town Name"]; // Assuming 'county' is the column name in your CSV
         const status = vote["Ballot Status"];
@@ -207,8 +209,14 @@ let allPossibleBallotStatuses = [];
         if (!votesByCounty[county]) {
             votesByCounty[county] = { RECEIVED: 0, REQUESTED: 0, ISSUED: 0, DEFECTIVE: 0, UNDELIVERABLE: 0, "UNKNOWN-NEVER RETURNED": 0, "RECEIVED / CURED BALLOT": 0, "RECEIVED AFTER ELECTION": 0, PERCENTAGE: 0};
         } 
+
+        
+        // add vote to total votes
+        allVotesByStatus[vote["Ballot Status"]]++;
+
         votesByCounty[county][status]++;
     });
+    console.log(allVotesByStatus)
     
 
     // calculate the percentage of votes received compared to votes issued
@@ -266,7 +274,8 @@ let allPossibleBallotStatuses = [];
 
     console.log('max percentage', maxPercentage);
     
-    allVotesByStatus.PERCENTAGE = (allVotesByStatus.RECEIVED / (allVotesByStatus.ISSUED+allVotesByStatus.RECEIVED)) * 100;
+    allVotesByStatus.PERCENTAGE = ((allVotesByStatus.RECEIVED+allVotesByStatus["RECEIVED / CURED BALLOT"]) / 
+        (allVotesByStatus.ISSUED+allVotesByStatus.RECEIVED+allVotesByStatus["RECEIVED / CURED BALLOT"]+allVotesByStatus["DEFECTIVE"]+allVotesByStatus["UNDELIVERABLE"]+allVotesByStatus["UNKNOWN-NEVER RETURNED"]+allVotesByStatus["REQUESTED"])) * 100;
     
 
     // round allVotesByStatus.PERCENTAGE to two decimal places
