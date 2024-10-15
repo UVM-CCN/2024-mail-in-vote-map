@@ -20,16 +20,44 @@ function resizeMap() {
     // get the container dimensions of the parent node of #map
     const container = d3.select("#map").node().getBoundingClientRect();
 
-    const width = container.width;
-    const height = container.height;
-    console.log(container)
+    let width = container.width;
+    let height = container.height;
+
+    let mapTranslateX;
+    let mapTranslateY;
+
+    let projectionScale = 15;
+    console.log(container.width)
+
+    if (container.width > 700) {
+        width = 700;
+        height = 800;
+
+        mapTranslateY = height / 2.3;
+        mapTranslateX = 200;
+    } else if ((container.width > 500)&&(container.width < 700)) {
+        width = container.width;
+        height = 800;
+        mapTranslateX = 200;
+        mapTranslateY = height / 2.2;
+
+        projectionScale = 16;
+
+    } else {
+        width = container.width;
+        height = 700;
+        mapTranslateX = width / 1.7;
+        mapTranslateY = height / 1.5;
+
+        projectionScale = 35;
+    }
 
     svg.attr("width", width)
        .attr("height", height);
 
     // Update projection
-    projection.scale(Math.min(width, height) * 14.3)
-              .translate([width / 3.5, height / 2.2]);
+    projection.scale(Math.min(width, height) * projectionScale)
+              .translate([mapTranslateX, mapTranslateY]);
 
     // Update path generator
     path = d3.geoPath().projection(projection);
