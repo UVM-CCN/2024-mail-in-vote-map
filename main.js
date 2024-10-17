@@ -140,7 +140,7 @@ let allPossibleBallotStatuses = [];
  // Load both the GeoJSON and CSV data
  Promise.all([
      d3.json("https://raw.githubusercontent.com/UVM-CCN/2024-mail-in-vote-map/refs/heads/main/external-data/FS_VCGI_OPENDATA_Boundary_BNDHASH_poly_towns_SP_v1_-4796836414587772833.geojson"),
-     d3.csv("https://raw.githubusercontent.com/UVM-CCN/2024-mail-in-vote-map/refs/heads/main/external-data/filtered-20241014.csv") // Replace with the path to your CSV file
+     d3.csv("https://raw.githubusercontent.com/UVM-CCN/2024-mail-in-vote-map/refs/heads/main/external-data/filtered-20241017.csv") // Replace with the path to your CSV file
  ]).then(function([vermont, voteData]) {
     // hide the loading screen
     d3.select("#loader").style("display", "none");
