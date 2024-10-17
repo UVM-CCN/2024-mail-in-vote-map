@@ -4,7 +4,7 @@ import pandas as pd
 day = "10"
 
 # read the csv file
-df = pd.read_csv('external-data/DetailedAbsenteeVotersList_10.14.2024.csv', encoding="ISO-8859-1")
+df = pd.read_csv('external-data/DetailedAbsenteeVotersList_10.17.2024.csv', encoding="ISO-8859-1")
 
 # create new dataframe that only keeps columns "Voter ID", "Ballot Status", "Town Name" and "County"
 df = df[["Voter ID", "Ballot Status", "Town Name", "County"]]
@@ -22,7 +22,7 @@ summary_df.rename(columns={"Ballot Status": "Number of Ballots Received"}, inpla
 summary_df.rename(columns={"County ISSUED": "Number of Ballots Issued"}, inplace=True)
 
 # save the new dataframe to a new csv file
-df.to_csv('external-data/filtered-20241014.csv', index=False)
+df.to_csv('external-data/filtered-20241017.csv', index=False)
 
 #summary_df.to_csv('external-data/summary-20241014.csv', index=True)
 
