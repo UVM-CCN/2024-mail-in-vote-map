@@ -76,6 +76,32 @@ function resizeMap() {
        .attr("x", (d, i) => i === 0 ? (width/4)-width*0.225 : (width/4)+width*0.225);
 }
 
+// event listener for radio buttons
+d3.selectAll("input[name='scale-type']").on("change", function() {
+    const value = this.value;
+
+    if (value === "relative") {
+        maxOfDomain = maxPercentage;
+        color.domain([0, maxOfDomain]);
+    } else {
+        maxOfDomain = 100;
+        color.domain([0, maxOfDomain]);
+    }
+
+    svg.selectAll("path")
+       .attr("fill", d => {
+           if (d.properties.votes.PERCENTAGE) {
+               return color(d.properties.votes.PERCENTAGE);
+           } else {
+            console.log(d)
+               return color(0);
+           }
+       });
+
+       // update the max-domain-label with maxOfDomain
+       d3.select("#max-domain-label").text(Math.round(maxOfDomain)+"%");
+});
+
  // Define projection and path generator
  const projection = d3.geoMercator()
     .center([-72.7, 44])
@@ -134,13 +160,14 @@ const allVotesByStatus = {
 };
 
 let maxPercentage = 0;
+let maxOfDomain;
 
 let allPossibleBallotStatuses = [];
 
  // Load both the GeoJSON and CSV data
  Promise.all([
      d3.json("https://raw.githubusercontent.com/UVM-CCN/2024-mail-in-vote-map/refs/heads/main/external-data/FS_VCGI_OPENDATA_Boundary_BNDHASH_poly_towns_SP_v1_-4796836414587772833.geojson"),
-     d3.csv("https://raw.githubusercontent.com/UVM-CCN/2024-mail-in-vote-map/refs/heads/main/external-data/filtered-20241021.csv") // Replace with the path to your CSV file
+     d3.csv("https://raw.githubusercontent.com/UVM-CCN/2024-mail-in-vote-map/refs/heads/main/external-data/filtered-20241024.csv") // Replace with the path to your CSV file
  ]).then(function([vermont, voteData]) {
     // hide the loading screen
     d3.select("#loader").style("display", "none");
@@ -151,8 +178,11 @@ let allPossibleBallotStatuses = [];
      // Set color scale domain based on total votes
      const totalVotes = Object.values(votesByTown).map(d => d.RECEIVED);
 
+     // set the max domain to the max percentage
+    maxOfDomain = maxPercentage;
+     
      // set it 0 to 1 for percentage
-     color.domain([0, maxPercentage]);
+     color.domain([0, maxOfDomain]);
 
      // Add vote counts to GeoJSON properties
      vermont.features.forEach(town => {
@@ -210,7 +240,8 @@ let allPossibleBallotStatuses = [];
         svg.append("text")
             .attr("x", (width/3.5)+180)
             .attr("y", 60)
-            .text(Math.round(maxPercentage)+"%")
+            .attr("id", "max-domain-label")
+            .text(Math.round(maxOfDomain)+"%")
             .attr("fill", "black");
 
             
@@ -309,7 +340,7 @@ let allPossibleBallotStatuses = [];
     // round allVotesByStatus.PERCENTAGE to two decimal places
     allVotesByStatus.PERCENTAGE = allVotesByStatus.PERCENTAGE.toFixed(2);
 
-    const dateStamp = "Oct 21, 2024"; // Replace with the date of your data
+    const dateStamp = "Oct 24, 2024"; // Replace with the date of your data
 
     // edit the text of the h3 tag with #subtitle
     d3.select("#subtitle").text(`In total, ${allVotesByStatus.PERCENTAGE}% of mail-in ballots have been returned and tallied as of ${dateStamp}`);

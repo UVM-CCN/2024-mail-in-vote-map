@@ -11,6 +11,13 @@
   <body>
     <h1 style="margin-left: 10px">Vermont Towns Voting by Mail</h1>
     <h3 style="max-width: 450px; line-height: 1.4;margin-left: 10px; margin-top: -10px; color: rgb(74, 74, 74); font-weight: 300" id="subtitle"></h3>
+    <div style="margin-left: 10px">
+      <span>Set color range as: </span>
+      <input type="radio" id="relative" name="scale-type" value="relative" checked>
+      <label for="relative">relative to highest town</label>
+      <input type="radio" id="total" name="scale-type" value="total">
+      <label for="total">out of 100%</label>
+    </div>
     <div id="loader"></div>
     <div id="map-container">
       <div id="map"></div>
