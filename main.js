@@ -343,7 +343,7 @@ let allPossibleBallotStatuses = [];
     const dateStamp = "Oct 24, 2024"; // Replace with the date of your data
 
     // edit the text of the h3 tag with #subtitle
-    d3.select("#subtitle").text(`In total, ${allVotesByStatus.PERCENTAGE}% of mail-in ballots have been returned and tallied as of ${dateStamp}`);
+    d3.select("#subtitle").text(`In total, ${allVotesByStatus.PERCENTAGE}% of mail-in ballots have been returned and accepted as of ${dateStamp}`);
 
     return votesByCounty;
  }
@@ -370,14 +370,14 @@ let allPossibleBallotStatuses = [];
         console.log(d.properties)
         if (d.properties.votes.ISSUED > 0) {
             // this is a town that has been issued ballots, but no one has returned them
-            textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> mail-in ballots tallied</span><br><br>${received} ballots received out of ${issued+received} sent out`
+            textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> mail-in ballots returned</span><br><br>${received} ballots received out of ${issued+received} sent out`
         } else {
             // this is a town that is showing all zeros for issued and received, some data discrepancy
             textString = `<b>${d.properties.TOWNNAME}</b> <br><br> No data available`
         }
     } else {
         // normal situation
-        textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> mail-in ballots tallied</span><br><br>${received} ballots received out of ${issued+received} sent out`
+        textString = `<span style='font-size: 21px'><b>${percentage}%</b> of <b>${d.properties.TOWNNAME}</b> mail-in ballots returned</span><br><br>${received} ballots received out of ${issued+received} sent out`
     }
 
     //  console.log(d.properties)
