@@ -340,7 +340,7 @@ let allPossibleBallotStatuses = [];
     // round allVotesByStatus.PERCENTAGE to two decimal places
     allVotesByStatus.PERCENTAGE = allVotesByStatus.PERCENTAGE.toFixed(2);
 
-    const dateStamp = "Oct 28, 2024"; // Replace with the date of your data
+    const dateStamp = "Oct 29, 2024"; // Replace with the date of your data
 
     // edit the text of the h3 tag with #subtitle
     d3.select("#subtitle").text(`In total, ${allVotesByStatus.PERCENTAGE}% of mail-in ballots have been returned and accepted as of ${dateStamp}`);
