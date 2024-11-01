@@ -5,7 +5,7 @@ day = "10"
 
 # read the csv file (sometimes we need the encoding parameter)
 # df = pd.read_csv('external-data/DetailedAbsenteeVotersList_10.24.2024.csv', encoding="ISO-8859-1")
-df = pd.read_csv('external-data/DetailedAbsenteeVotersList_10.31.2024.csv')
+df = pd.read_csv('external-data/DetailedAbsenteeVotersList_11.01.2024.csv')
 
 print(df.head())
 
@@ -25,7 +25,7 @@ summary_df.rename(columns={"Ballot Status": "Number of Ballots Received"}, inpla
 summary_df.rename(columns={"County ISSUED": "Number of Ballots Issued"}, inplace=True)
 
 # save the new dataframe to a new csv file
-df.to_csv('external-data/filtered-20241031.csv', index=False)
+df.to_csv('external-data/filtered-20241101.csv', index=False)
 
 #summary_df.to_csv('external-data/summary-20241014.csv', index=True)
 
